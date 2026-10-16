@@ -1,17 +1,16 @@
 import { useEffect, useState } from 'react';
-import { getJson } from '../api/client.js';
 
-type Props = { title: string; description: string; endpoint: string; collection: string; emptyMessage: string };
+type Props = { title: string; description: string; load: () => Promise<Record<string, unknown>>; collection: string; emptyMessage: string };
 type ApiRecord = Record<string, unknown>;
 
-export function CapabilityCard({ title, description, endpoint, collection, emptyMessage }: Props) {
+export function CapabilityCard({ title, description, load, collection, emptyMessage }: Props) {
   const [items, setItems] = useState<ApiRecord[] | null>(null);
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     let isCurrent = true;
 
-    getJson<Record<string, unknown>>(endpoint)
+    load()
       .then((payload) => {
         const result = payload[collection];
         if (!Array.isArray(result)) throw new Error(`Invalid ${collection} response`);
@@ -22,7 +21,7 @@ export function CapabilityCard({ title, description, endpoint, collection, empty
       });
 
     return () => { isCurrent = false; };
-  }, [collection, endpoint]);
+  }, [collection, load]);
 
   return <section className="card h-100"><div className="card-body"><h2 className="h4">{title}</h2><p>{description}</p>
     {items === null && !hasError && <p role="status">Loading {title.toLowerCase()}...</p>}
